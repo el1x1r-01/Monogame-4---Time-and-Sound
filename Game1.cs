@@ -14,15 +14,19 @@ namespace Monogame_4___Time_and_Sound
 
         Texture2D bombTexture, pliersTexture, explosionTexture;
 
-        SpriteFont timeFont;
+        SpriteFont timeFont, statusFont;
 
-        float seconds;
+        float seconds, exitTimer;
 
         MouseState mouseState;
 
         SoundEffect explode, cheering;
 
-        bool timerActive, explosionImage, exit;
+        bool timerActive, explosionImage, exit, canClick;
+
+        string statusText;
+
+        Vector2 statusLocation;
 
         public Game1()
         {
@@ -35,7 +39,7 @@ namespace Monogame_4___Time_and_Sound
         {
             // TODO: Add your initialization logic here
 
-            window = new Rectangle(0, 0, 800, 500);
+            window = new Rectangle(0, 0, 800, 600);
             _graphics.PreferredBackBufferWidth = window.Width;
             _graphics.PreferredBackBufferHeight = window.Height;
             _graphics.ApplyChanges();
@@ -50,6 +54,7 @@ namespace Monogame_4___Time_and_Sound
             timerActive = true;
             explosionImage = false;
             exit = false;
+            canClick = true;
 
             base.Initialize();
         }
@@ -65,6 +70,7 @@ namespace Monogame_4___Time_and_Sound
             pliersTexture = Content.Load<Texture2D>("pliers");
 
             timeFont = Content.Load<SpriteFont>("TimeFont");
+            statusFont = Content.Load<SpriteFont>("StatusFont");
 
             explode = Content.Load<SoundEffect>("explosion");
             cheering = Content.Load<SoundEffect>("kids_cheering");
@@ -77,45 +83,80 @@ namespace Monogame_4___Time_and_Sound
 
             // TODO: Add your update logic here
 
+            exitTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
             if (timerActive)
             {
                 seconds += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                statusLocation = new Vector2(50, 500);
+                statusText = "Diffuse the bomb before it explodes!";
             }
 
             mouseState = Mouse.GetState();
 
             pliersRect = new Rectangle(mouseState.X, mouseState.Y, 300, 300);
 
-            if (mouseState.LeftButton == ButtonState.Pressed && redWireRect.Contains(mouseState.Position))
+            if (canClick)
             {
+                if (mouseState.LeftButton == ButtonState.Pressed && redWireRect.Contains(mouseState.Position))
+                {
+                    statusLocation = new Vector2(50, 500);
+                    statusText = "You cut the RED wire! The bomb explodes!";
+
+                    explode.Play();
+                    explosionImage = true;
+
+                    seconds = 0f;
+                    timerActive = false;
+
+                    exitTimer = 0f;
+                    exit = true;
+
+                    canClick = false;
+                }
+            }
+
+            if (canClick)
+            {
+                if (mouseState.LeftButton == ButtonState.Pressed && greenWireRect.Contains(mouseState.Position))
+                {
+                    statusLocation = new Vector2(35, 500);
+                    statusText = "You cut the GREEN wire! You diffuse the bomb!";
+
+                    timerActive = false;
+
+                    cheering.Play();
+
+                    exitTimer = 0f;
+                    exit = true;
+
+                    canClick = false;
+                }
+            }
+
+            if (seconds >= 10f)
+            {
+                statusLocation = new Vector2(50, 500);
+                statusText ="Time's up! The bomb explodes!";
+
                 explode.Play();
                 explosionImage = true;
 
                 seconds = 0f;
-
-                exit = true;
-            }
-
-            if (mouseState.LeftButton == ButtonState.Pressed && greenWireRect.Contains(mouseState.Position))
-            {
                 timerActive = false;
 
-                cheering.Play();
-            }
-
-            if (seconds >= 60f)
-            {
-                explode.Play();
-                explosionImage = true;
-
-                seconds = 0f;
-
+                exitTimer = 0f;
                 exit = true;
+
+                canClick = false;
             }
 
             if (exit)
             {
-                if (seconds >= 10f)
+                canClick = false;
+
+                if (exitTimer >= 10f)
                 {
                     Exit();
                 }
@@ -134,7 +175,7 @@ namespace Monogame_4___Time_and_Sound
 
             _spriteBatch.Draw(bombTexture, bombRect, Color.White);
            
-            _spriteBatch.DrawString(timeFont, (60 - seconds).ToString("00.0"), new Vector2(270, 200), Color.Black);
+            _spriteBatch.DrawString(timeFont, (10 - seconds).ToString("0.00"), new Vector2(270, 200), Color.Black);
 
             if (explosionImage)
             {
@@ -143,6 +184,8 @@ namespace Monogame_4___Time_and_Sound
 
             _spriteBatch.Draw(pliersTexture, pliersRect, Color.White);
 
+            _spriteBatch.DrawString(statusFont,statusText, statusLocation, Color.White);
+            
             _spriteBatch.End();
 
             base.Draw(gameTime);

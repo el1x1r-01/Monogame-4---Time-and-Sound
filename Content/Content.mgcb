@@ -64,6 +64,13 @@
 /processorParam:TextureFormat=Color
 /build:pliers.png
 
+#begin StatusFont.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:StatusFont.spritefont
+
 #begin TimeFont.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
